@@ -1,0 +1,33 @@
+:root {
+  font-family: "Krona One", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #000;
+  background-color: #EBEBDA;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+  font-family: "Lacquer", system-ui;
+  font-size: 96px;
+  font-weight: 700;
+  color: #ED0900;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h2 {
+  font-family: "Lacquer", system-ui;
+  font-size:80px;
+  font-weight: 700;
+  color: #1C2475;
+  line-height: 1.2;
+  margin: 0;
+}
