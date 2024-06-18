@@ -107,7 +107,7 @@ const Home = () => {
                 <img src="./images/red-cat.png" alt="" />
             </div>
             <div className={style.contactExplanation}>
-                <p>Let&apos;s get in touch! You can find us on various events and places in Ghent! But if thats too abstract for you, You can always contact me. If it&apos;s a question about my project or you simply what to talk or brainstorm, don&apos;t hesitate, just shoot! </p>
+                <p>Let&apos;s get in touch! You can find us at various events and places in Ghent! But if thats too abstract for you, You can always contact me. If it&apos;s a question about my project or you simply what to talk or brainstorm, don&apos;t hesitate, just shoot! </p>
                 <div className={style.contactInfo}>
             <div className={style.contactItem}>
                 <img src="./images/mail.png" alt="Email icon" />

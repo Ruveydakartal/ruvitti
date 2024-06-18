@@ -23,20 +23,14 @@
 }
 
 .canvasContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 90%;
     height: 90vh;
-    position: relative;
-    overflow: scroll;
+    overflow: auto;
     border: 6px solid #1C2475;
 }
 
 .canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    min-width: 100%;
-    min-height: 100%;
+    display: block;
+    width: 100%;
+    margin: 0 auto;
   }

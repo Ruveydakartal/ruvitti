@@ -10,8 +10,8 @@ const InfiniteCanvas = () => {
     const canvasRef = useRef(null);
     const [drawings, setDrawings] = useState([]);
     const [positions, setPositions] = useState([]);
-    const [zoom] = useState(2); // Add zoom state
-
+    const [zoom] = useState(2);
+    
     useEffect(() => {
         const fetchVectorData = async () => {
             const { data, error } = await supabase.from('drawings').select('vectors');
@@ -19,37 +19,53 @@ const InfiniteCanvas = () => {
                 console.error('Error fetching vector data:', error);
             } else {
                 const newDrawings = data.map(d => d.vectors);
-                const newPositions = generateRandomPositions(newDrawings.length, newDrawings);
+                const newPositions = generateGridPositions(newDrawings.length);
                 setDrawings(newDrawings);
                 setPositions(newPositions);
             }
         };
         fetchVectorData();
+    
+        const channel = supabase.channel('custom-all-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'drawings' }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    const newDrawing = payload.new.vectors;
+                    setDrawings(prevDrawings => {
+                        const updatedDrawings = [...prevDrawings, newDrawing];
+                        const newPositions = generateGridPositions(updatedDrawings.length);
+                        setPositions(newPositions);
+                        return updatedDrawings;
+                    });
+                }
+            })
+            .subscribe();
+    
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
-
-    const generateRandomPositions = (count, drawings) => {
+    
+    const generateGridPositions = (count) => {
         const positions = [];
-        const maxOffset = 100;  // Reduced from 2000 to bring drawings closer
-        const padding = 10; // Reduced padding to bring drawings closer together
-
         for (let i = 0; i < count; i++) {
-            const drawing = drawings[i];
-            const minX = Math.min(...drawing.map(v => Math.min(v.x1, v.x2)));
-            const minY = Math.min(...drawing.map(v => Math.min(v.y1, v.y2)));
-            const maxX = Math.max(...drawing.map(v => Math.max(v.x1, v.x2)));
-            const maxY = Math.max(...drawing.map(v => Math.max(v.y1, v.y2)));
-
-            const drawingWidth = maxX - minX;
-            const drawingHeight = maxY - minY;
-
-            positions.push({
-                x: Math.random() * (maxOffset + drawingWidth - padding*2) + padding, // Adjusted for centering
-                y: Math.random() * (maxOffset + drawingHeight - padding*2) + padding, // Adjusted for centering
-            });
+            const position = generateGridPosition(i);
+            positions.push(position);
         }
         return positions;
     };
-
+    
+    const generateGridPosition = (index) => {
+        const drawingsPerRow = 4;
+        const padding = 10;
+        const drawingWidth = 200; // assumed width of each drawing
+        const drawingHeight = 200; // assumed height of each drawing
+    
+        const x = (index % drawingsPerRow) * (drawingWidth + padding) + padding;
+        const y = Math.floor(index / drawingsPerRow) * (drawingHeight + padding) + padding;
+    
+        return { x, y };
+    };
+    
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) {
@@ -61,36 +77,34 @@ const InfiniteCanvas = () => {
             console.error('Canvas context not found');
             return;
         }
-
-        // Calculate the canvas size based on positions
-        const maxX = Math.max(...positions.map(p => p.x));
-        const maxY = Math.max(...positions.map(p => p.y));
-
-        canvas.width = maxX > canvas.clientWidth? maxX : canvas.clientWidth;
-        canvas.height = maxY > canvas.clientHeight? maxY : canvas.clientHeight;
-
-        ctx.scale(canvas.width / 1000, canvas.height / 1000); // Scale the canvas to fit more drawings
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear canvas before drawing
-
-        // Draw each drawing at its scaled position
+    
+        const maxX = Math.max(...positions.map(p => p.x)) + 300; // added drawing width for canvas size
+        const maxY = Math.max(...positions.map(p => p.y)) + 200; // added drawing height for canvas size
+    
+        canvas.width = maxX > canvas.clientWidth ? maxX : canvas.clientWidth;
+        canvas.height = maxY > canvas.clientHeight ? maxY : canvas.clientHeight;
+    
+        ctx.scale(canvas.width / 1000, canvas.height / 1000);
+    
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
         drawings.forEach((drawing, index) => {
             const pos = positions[index];
             drawing.forEach(vector => {
-                ctx.save(); // Save the current state of the canvas context
-                ctx.translate(pos.x, pos.y); // Move the origin to the drawing position
-                ctx.scale(1 / zoom, 1 / zoom); // Apply inverse scaling
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.scale(1 / zoom, 1 / zoom);
                 ctx.beginPath();
                 ctx.moveTo(vector.x1, vector.y1);
                 ctx.lineTo(vector.x2, vector.y2);
                 ctx.lineWidth = vector.weight;
-                ctx.strokeStyle = vector.isErasing? 'rgba(255, 255, 255, 1)' : vector.color;
+                ctx.strokeStyle = vector.isErasing ? 'rgba(255, 255, 255, 1)' : vector.color;
                 ctx.stroke();
-                ctx.restore(); // Restore the context to its saved state
+                ctx.restore();
             });
         });
     }, [drawings, positions, zoom]);
-
+    
     return (
         <div className={style.container}>
             <div className={style.header}>
@@ -98,10 +112,10 @@ const InfiniteCanvas = () => {
                 <img src="./images/heart-cat.png" alt="" />
             </div>
             <div className={style.canvasContainer}>
-                <canvas className={style.canvas}  ref={canvasRef}></canvas>
+                <canvas className={style.canvas} ref={canvasRef}></canvas>
             </div>
         </div>
     );
-};
-
-export default InfiniteCanvas;
+    };
+    
+    export default InfiniteCanvas;
