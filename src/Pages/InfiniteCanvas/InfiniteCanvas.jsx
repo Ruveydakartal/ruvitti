@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import style from './InfiniteCanvas.module.css';
 
-const supabaseUrl = 'https://xvavazwclobrrqqynkmb.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2YXZhendjbG9icnJxcXlua21iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxODEyMDQwMCwiZXhwIjoyMDMzNjk2NDAwfQ.22w87ILwxbkzH7S7VU-oF8Ty5Zxm1C-xWdMg9E0U6Rg';
+const supabaseUrl = 'https://fmektjztjigqzwgspsgz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtZWt0anp0amlncXp3Z3Nwc2d6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTk3NjUxNSwiZXhwIjoyMDU1NTUyNTE1fQ.g_4_5RXREUO2KrJUiK0S0PP3CkLIgMpy-4qiUGcL_1A';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 const InfiniteCanvas = () => {
     const canvasRef = useRef(null);
@@ -18,14 +19,16 @@ const InfiniteCanvas = () => {
             if (error) {
                 console.error('Error fetching vector data:', error);
             } else {
+                console.log('Fetched data:', data);
                 const newDrawings = data.map(d => d.vectors);
                 const newPositions = generateGridPositions(newDrawings.length);
                 setDrawings(newDrawings);
                 setPositions(newPositions);
             }
+            
         };
         fetchVectorData();
-    
+
         const channel = supabase.channel('custom-all-channel')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'drawings' }, (payload) => {
                 if (payload.eventType === 'INSERT') {
@@ -55,7 +58,7 @@ const InfiniteCanvas = () => {
     };
     
     const generateGridPosition = (index) => {
-        const drawingsPerRow = 4;
+        const drawingsPerRow = 3;
         const padding = 10;
         const drawingWidth = 200; // assumed width of each drawing
         const drawingHeight = 200; // assumed height of each drawing
